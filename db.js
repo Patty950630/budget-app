@@ -1,7 +1,8 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const dbPath = path.join('C:/sqlite_project/budget.sqlite');
+// ✅ 使用相對路徑，找專案根目錄的 budget.db
+const dbPath = path.join(__dirname, 'budget.db');
 
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
@@ -12,4 +13,3 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 module.exports = db;
-

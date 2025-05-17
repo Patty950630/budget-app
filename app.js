@@ -23,14 +23,14 @@ app.get('/records', (req, res) => {
 
 // ✅ 新增一筆記帳資料
 app.post('/records', (req, res) => {
-  const { item, amount, date } = req.body;
+  const { item, amount, date, type, category } = req.body;
 
-  if (!item || !amount || !date) {
+  if (!item || !amount || !date || !type || !category) {
     return res.status(400).json({ error: '欄位缺失' });
   }
 
-  const sql = 'INSERT INTO records (item, amount, date) VALUES (?, ?, ?)';
-  db.run(sql, [item, amount, date], function (err) {
+  const sql = 'INSERT INTO records (item, amount, date, type, category) VALUES (?, ?, ?, ?, ?)';
+  db.run(sql, [item, amount, date, type, category], function (err) {
     if (err) {
       console.error('❌ 新增失敗：', err.message);
       return res.status(500).json({ error: err.message });
@@ -39,10 +39,13 @@ app.post('/records', (req, res) => {
       id: this.lastID,
       item,
       amount,
-      date
+      date,
+      type,
+      category
     });
   });
 });
+
 
 // ✅ 刪除一筆記帳資料
 app.delete('/records/:id', (req, res) => {

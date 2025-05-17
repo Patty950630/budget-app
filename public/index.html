@@ -10,20 +10,29 @@
     <h1 class="text-center mb-4">💰 我的記帳簿</h1>
 
     <!-- 新增資料表單 -->
-    <form id="record-form" class="row g-3 mb-4">
-      <div class="col-md-4">
-        <input type="text" id="item" class="form-control" placeholder="項目" required />
-      </div>
-      <div class="col-md-3">
-        <input type="number" id="amount" class="form-control" placeholder="金額" required />
-      </div>
-      <div class="col-md-3">
-        <input type="date" id="date" class="form-control" required />
-      </div>
-      <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-primary">新增</button>
-      </div>
-    </form>
+    <form id="record-form">
+        <input type="text" id="item" placeholder="項目" />
+        <input type="number" id="amount" placeholder="金額" />
+        <input type="date" id="date" />
+      
+        <!-- ✅ 把這段加在這裡 -->
+        <select id="type">
+          <option value="支出">支出</option>
+          <option value="收入">收入</option>
+        </select>
+      
+        <select id="category">
+          <option value="早餐">早餐</option>
+          <option value="午餐">午餐</option>
+          <option value="晚餐">晚餐</option>
+          <option value="點心">點心</option>
+          <option value="其他">其他</option>
+        </select>
+      
+        <input id="customCategory" type="text" placeholder="請輸入其他類別" style="display: none" />
+      
+        <button type="submit">新增</button>
+      </form>      
 
     <ul id="record-list" class="list-group"></ul>
   </div>
@@ -72,6 +81,17 @@
     };
 
     loadRecords();
+
+    const categorySelect = document.getElementById('category');
+  const customCategoryInput = document.getElementById('customCategory');
+
+  categorySelect.addEventListener('change', () => {
+    if (categorySelect.value === '其他') {
+      customCategoryInput.style.display = 'inline';
+    } else {
+      customCategoryInput.style.display = 'none';
+    }
+  });
   </script>
 </body>
 </html>

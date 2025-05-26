@@ -9,15 +9,14 @@
   <div class="container py-4">
     <h1 class="text-center mb-4">💰 我的記帳簿</h1>
 
-    <!-- 新增資料表單 -->
-    <form id="record-form" class="mb-4 d-flex gap-2 flex-wrap">
+    <!-- 表單 -->
+    <form id="record-form" class="d-flex flex-wrap gap-2 mb-3">
       <select id="type" class="form-select w-auto">
         <option value="支出">支出</option>
         <option value="收入">收入</option>
       </select>
 
-      <!-- 項目選單（支出才出現） -->
-      <select id="item" class="form-select w-auto">
+      <select id="category" class="form-select w-auto">
         <option value="早餐">早餐</option>
         <option value="午餐">午餐</option>
         <option value="晚餐">晚餐</option>
@@ -25,58 +24,40 @@
         <option value="其他">其他</option>
       </select>
 
-      <!-- 使用者自定義類別 -->
       <input id="customCategory" type="text" class="form-control w-auto" placeholder="請輸入其他類別" style="display: none" />
 
-      <input type="number" id="amount" class="form-control w-auto" placeholder="金額" />
-      <input type="date" id="date" class="form-control w-auto" />
+      <input type="number" id="amount" class="form-control w-auto" placeholder="金額" required />
+      <input type="date" id="date" class="form-control w-auto" required />
       <button type="submit" class="btn btn-primary">新增</button>
     </form>
 
     <!-- 結餘顯示 -->
-    <div id="summary" class="mb-3 fw-bold text-end"></div>
+    <p class="fw-bold">目前結餘：<span id="balance">$0</span></p>
 
-    <!-- 記帳清單 -->
+    <!-- 清單 -->
     <ul id="record-list" class="list-group"></ul>
   </div>
 
   <script>
-    const api = 'https://budget-app-1mt8.onrender.com/records';
-    const form = document.getElementById('record-form');
-    const typeSelect = document.getElementById('type');
-    const itemSelect = document.getElementById('item');
-    const customCategoryInput = document.getElementById('customCategory');
+    const api = '/records';
     const list = document.getElementById('record-list');
-    const summary = document.getElementById('summary');
+    const form = document.getElementById('record-form');
+    const balance = document.getElementById('balance');
 
-    // 類型改變：收入不顯示項目與自訂欄位
-    typeSelect.addEventListener('change', () => {
-      const isIncome = typeSelect.value === '收入';
-      itemSelect.style.display = isIncome ? 'none' : 'inline';
-      customCategoryInput.style.display = 'none';
-    });
-
-    // 選其他時顯示輸入框
-    itemSelect.addEventListener('change', () => {
-      customCategoryInput.style.display = itemSelect.value === '其他' ? 'inline' : 'none';
-    });
-
-    // 載入記錄
+    // 載入資料
     async function loadRecords() {
       const res = await fetch(api);
       const records = await res.json();
       list.innerHTML = '';
-      let total = 0;
+      let totalIncome = 0;
+      let totalExpense = 0;
 
       records.forEach(r => {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        const typeMark = r.type === '收入' ? '+' : '-';
-        const displayItem = r.type === '收入' ? '收入' : (r.category || r.item);
-        li.innerHTML = `<span>${r.date} - ${displayItem}：${typeMark}$${r.amount}</span>`;
-
-        total += r.type === '收入' ? r.amount : -r.amount;
-
+        li.innerHTML = `
+          <span>${r.date} - ${r.type}：${r.category || r.item} $${r.amount}</span>
+        `;
         const delBtn = document.createElement('button');
         delBtn.textContent = '刪除';
         delBtn.className = 'btn btn-danger btn-sm';
@@ -86,21 +67,34 @@
         };
         li.appendChild(delBtn);
         list.appendChild(li);
+
+        // 結餘計算
+        if (r.type === '收入') {
+          totalIncome += r.amount;
+        } else {
+          totalExpense += r.amount;
+        }
       });
 
-      summary.textContent = `目前結餘：$${total}`;
+      const result = totalIncome - totalExpense;
+      balance.textContent = `$${result}`;
     }
 
     // 表單送出
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const type = typeSelect.value;
-      const item = type === '收入' ? '收入' : itemSelect.value;
-      const category = item === '其他' ? customCategoryInput.value : item;
-      const amount = parseInt(form.amount.value);
-      const date = form.date.value;
 
-      const data = { item, amount, date, type, category };
+      const type = document.getElementById('type').value;
+      const category = document.getElementById('category').value;
+      const customCategory = document.getElementById('customCategory').value;
+      const amount = parseInt(document.getElementById('amount').value);
+      const date = document.getElementById('date').value;
+
+      const item = (type === '支出')
+        ? (category === '其他' ? customCategory : category)
+        : '收入';
+
+      const data = { item, amount, date, type, category: category === '其他' ? customCategory : category };
 
       await fetch(api, {
         method: 'POST',
@@ -109,12 +103,41 @@
       });
 
       form.reset();
-      itemSelect.style.display = 'inline';
-      customCategoryInput.style.display = 'none';
+      document.getElementById('customCategory').style.display = 'none';
       loadRecords();
     };
 
+    // 類別顯示邏輯
+    const typeSelect = document.getElementById('type');
+    const categorySelect = document.getElementById('category');
+    const customCategoryInput = document.getElementById('customCategory');
+
+    typeSelect.addEventListener('change', () => {
+      if (typeSelect.value === '支出') {
+        categorySelect.style.display = 'inline-block';
+        if (categorySelect.value === '其他') {
+          customCategoryInput.style.display = 'inline-block';
+        } else {
+          customCategoryInput.style.display = 'none';
+        }
+      } else {
+        categorySelect.style.display = 'none';
+        customCategoryInput.style.display = 'none';
+      }
+    });
+
+    categorySelect.addEventListener('change', () => {
+      if (categorySelect.value === '其他') {
+        customCategoryInput.style.display = 'inline-block';
+      } else {
+        customCategoryInput.style.display = 'none';
+      }
+    });
+
+    // 初始化
     loadRecords();
+    // 預設控制顯示狀態
+    typeSelect.dispatchEvent(new Event('change'));
   </script>
 </body>
 </html>

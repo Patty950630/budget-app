@@ -25,9 +25,10 @@ app.get('/records', (req, res) => {
 app.post('/records', (req, res) => {
   const { item, amount, date, type, category } = req.body;
 
-  if (!item || !amount || !date || !type || !category) {
-    return res.status(400).json({ error: '欄位缺失' });
-  }
+  if (!item || amount === undefined || !date || !type || !category) {
+  return res.status(400).json({ error: '欄位缺失' });
+}
+
 
   const sql = 'INSERT INTO records (item, amount, date, type, category) VALUES (?, ?, ?, ?, ?)';
   db.run(sql, [item, amount, date, type, category], function (err) {
